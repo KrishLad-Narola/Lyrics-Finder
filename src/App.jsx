@@ -1,6 +1,6 @@
 import './App.css';
-import Axios from 'axios';
 import { useState } from 'react';
+import { fetchLyrics } from './client/api';
 import { HiOutlineMagnifyingGlassCircle } from "react-icons/hi2";
 
 function App() {
@@ -9,25 +9,25 @@ function App() {
     const [lyrics, setLyrics] = useState("");
     const [loading, setLoading] = useState(false);
 
-    async function searchLyrics() {
-        if (artist.trim() === "" || song.trim() === "") {
+    const searchLyrics = async () => {
+        if (!artist.trim() || !song.trim()) {
             alert("Please enter both Artist and Song name.");
             return;
         }
 
         setLoading(true);
-        setLyrics(""); 
+        setLyrics("");
 
         try {
-            const url = `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(song)}`;
-            const res = await Axios.get(url);
-            setLyrics(res.data.lyrics || "No lyrics found for this track.");
+            const res = await fetchLyrics(artist, song);
+            setLyrics(res.data.lyrics);
         } catch (err) {
-            setLyrics("The server is busy or lyrics weren't found. Try again!");
+            console.error(err);
+            setLyrics("Server error or lyrics not found.");
         } finally {
             setLoading(false);
         }
-    }
+    };
 
     return (
         <div className="App">
@@ -38,29 +38,28 @@ function App() {
                 </header>
 
                 <div className="search-container">
-                    <div className="input-group">
-                        <input 
-                            type="text" 
-                            placeholder='Artist Name'
-                            onChange={(e) => setArtist(e.target.value)} 
-                        />
-                    </div>
-                    <div className="input-group">
-                        <input 
-                            type="text" 
-                            placeholder='Song Title'
-                            onChange={(e) => setSong(e.target.value)} 
-                        />
-                    </div>
-                    <button className="search-btn" onClick={searchLyrics} disabled={loading}>
-                        {loading ? <div className="spinner"></div> : <><HiOutlineMagnifyingGlassCircle size={22} /> Search</>}
+                    <input
+                        type="text"
+                        placeholder="Artist Name"
+                        value={artist}
+                        onChange={(e) => setArtist(e.target.value)}
+                    />
+
+                    <input
+                        type="text"
+                        placeholder="Song Title"
+                        value={song}
+                        onChange={(e) => setSong(e.target.value)}
+                    />
+
+                    <button onClick={searchLyrics} disabled={loading}>
+                        {loading ? "Loading..." : <><HiOutlineMagnifyingGlassCircle size={20} /> Search</>}
                     </button>
                 </div>
 
                 {lyrics && (
                     <div className="results-area">
-                        <hr />
-                        <pre className="lyrics-text">{lyrics}</pre>
+                        <pre>{lyrics}</pre>
                     </div>
                 )}
             </div>
